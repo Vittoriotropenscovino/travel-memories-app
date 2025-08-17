@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="theme-color" content="#6366f1"/>
+  <title>Travel Memories</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="app.js"></script>
+</head>
+
+<body>
+  <!-- Loader -->
+  <div id="loader" class="loading"><div class="loader"></div></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">✈️ <span data-i18n="app_title">Travel Memories</span></div>
+      <div class="header-actions">
+        <button class="btn-icon" data-action="toggle-search" aria-label="Cerca">🔍</button>
+        <button class="btn-icon" data-action="current-location" aria-label="Posizione corrente">📍</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search -->
+  <div id="searchContainer" class="search-container">
+    <input id="searchInput" class="search-input" placeholder="Cerca ricordi…" />
+    <select id="searchFilter" class="select">
+      <option value="all" data-i18n="search.filter_all">Tutti</option>
+      <option value="title" data-i18n="search.filter_title">Titolo</option>
+      <option value="location" data-i18n="search.filter_location">Luogo</option>
+      <option value="date" data-i18n="search.filter_date">Data</option>
+    </select>
+  </div>
+
+  <!-- Tabs -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="dashboard" data-i18n="tabs.dashboard">Dashboard</button>
+    <button class="nav-tab" data-tab="memories" data-i18n="tabs.memories">Ricordi</button>
+    <button class="nav-tab" data-tab="map" data-i18n="tabs.map">Mappa</button>
+    <button class="nav-tab" data-tab="timeline" data-i18n="tabs.timeline">Timeline</button>
+    <button class="nav-tab" data-tab="settings" data-i18n="tabs.settings">Impostazioni</button>
+  </div>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Dashboard -->
+    <section id="dashboard" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card"><div id="statMem" class="stat-value">0</div><div class="stat-label" data-i18n="stats.memories">Ricordi</div></div>
+        <div class="stat-card"><div id="statPic" class="stat-value">0</div><div class="stat-label" data-i18n="stats.photos">Foto</div></div>
+        <div class="stat-card"><div id="statPla" class="stat-value">0</div><div class="stat-label" data-i18n="stats.places">Luoghi</div></div>
+        <div class="stat-card"><div id="statKm"  class="stat-value">0</div><div class="stat-label" data-i18n="stats.km">Km</div></div>
+      </div>
+      <h2 style="margin: 20px 0;" data-i18n="recent_memories">Ricordi Recenti</h2>
+      <div id="recentMemories" class="memories-grid"></div>
+    </section>
+
+    <!-- Memories -->
+    <section id="memories" class="section">
+      <div id="memoriesGrid" class="memories-grid"></div>
+      <div id="emptyState" class="empty-state" style="display:none">
+        <div class="empty-icon">📷</div>
+        <div class="empty-title" data-i18n="empty.title">Nessun ricordo</div>
+        <div class="empty-text" data-i18n="empty.text">Inizia ad aggiungere i tuoi ricordi di viaggio!</div>
+        <button class="btn btn-primary" data-action="open-modal" data-i18n="buttons.add_memory">Aggiungi Ricordo</button>
+      </div>
+    </section>
+
+    <!-- Map -->
+    <section id="map" class="section">
+      <div id="mapContainer"></div>
+    </section>
+
+    <!-- Timeline -->
+    <section id="timeline" class="section">
+      <div id="timelineContainer" class="timeline"></div>
+      <div id="timelineEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🕒</div>
+        <div class="empty-title" data-i18n="timeline_empty">Nessun evento</div>
+        <div class="empty-text" data-i18n="empty.text">Inizia ad aggiungere i tuoi ricordi di viaggio!</div>
+        <button class="btn btn-primary" data-action="open-modal" data-i18n="buttons.add_memory">Aggiungi Ricordo</button>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="settings" class="section">
+      <div class="settings-list">
+        <div class="setting-item" data-setting="gps">
+          <div>
+            <div class="setting-label" data-i18n="settings.gps">📍 GPS</div>
+            <small style="color: var(--text-secondary);" data-i18n="settings.gps_desc">Localizzazione automatica</small>
+          </div>
+          <div id="toggle-gps" class="toggle"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="setting-item" data-setting="notifications">
+          <div>
+            <div class="setting-label" data-i18n="settings.notifications">🔔 Notifiche</div>
+            <small style="color: var(--text-secondary);" data-i18n="settings.notifications_desc">Promemoria viaggi</small>
+          </div>
+          <div id="toggle-notifications" class="toggle"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label" data-i18n="settings.language">🌐 Lingua</div>
+          </div>
+          <select id="langSelect" class="select">
+            <option value="it">Italiano</option>
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+          </select>
+        </div>
+        <div class="setting-item" data-action="export-data">
+          <div>
+            <div class="setting-label" data-i18n="settings.export">💾 Esporta Dati</div>
+            <small style="color: var(--text-secondary);" data-i18n="settings.export_desc">Backup JSON</small>
+          </div>
+          <span>→</span>
+        </div>
+        <div class="setting-item" data-action="clear-data">
+          <div>
+            <div class="setting-label" data-i18n="settings.clear">🗑️ Cancella Tutto</div>
+            <small class="danger" data-i18n="settings.clear_desc">Elimina dati</small>
+          </div>
+          <span style="color: var(--danger);">⚠️</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FAB -->
+  <button class="fab" data-action="open-modal" aria-label="Aggiungi">➕</button>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-nav="dashboard">🏠<span class="nav-label" data-i18n="nav.home">Home</span></button>
+    <button class="nav-item" data-nav="memories">📸<span class="nav-label" data-i18n="nav.memories">Ricordi</span></button>
+    <button class="nav-item" data-action="open-modal">➕<span class="nav-label" data-i18n="nav.new">Nuovo</span></button>
+    <button class="nav-item" data-nav="map">🗺️<span class="nav-label" data-i18n="nav.map">Mappa</span></button>
+    <button class="nav-item" data-nav="settings">⚙️<span class="nav-label" data-i18n="nav.settings">Impostazioni</span></button>
+  </nav>
+
+  <!-- Modal Add/Edit -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2 id="modalTitle" class="modal-title" data-i18n="modal.new_title">Nuovo Ricordo</h2>
+        <button class="close-btn" data-action="close-modal" aria-label="Chiudi">✕</button>
+      </header>
+      <section class="modal-body">
+        <form id="memoryForm">
+          <input type="hidden" id="editId" />
+
+          <div class="form-group">
+            <label class="form-label" for="title" data-i18n="modal.title">Titolo</label>
+            <input id="title" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="location" data-i18n="modal.location">Località</label>
+            <input id="location" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="date" data-i18n="modal.date">Data</label>
+            <input id="date" type="date" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="description" data-i18n="modal.description">Descrizione</label>
+            <textarea id="description" class="form-textarea"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="modal.photos">Foto (max 3)</label>
+            <div class="image-upload" id="uploader">
+              <span data-i18n="uploader.hint">📷 Clicca per aggiungere foto</span>
+              <input id="imageInput" type="file" accept="image/*" capture="environment" multiple hidden />
+            </div>
+            <div id="previews" class="previews-container"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" data-i18n="buttons.save_memory">Salva Ricordo</button>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal Detail -->
+  <div id="detailModal" class="modal" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2 id="detailTitle" class="modal-title"></h2>
+        <button class="close-btn" data-action="close-detail" aria-label="Chiudi">✕</button>
+      </header>
+      <section class="modal-body">
+        <div id="detailImages" class="carousel"></div>
+        <p id="detailLocation" class="detail-info">📍 <span></span></p>
+        <p id="detailDate" class="detail-info">📅 <span></span></p>
+        <p id="detailDescription" class="detail-description"></p>
+        <button class="btn btn-primary btn-block" data-action="share-memory" data-i18n="buttons.share">Condividi</button>
+      </section>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+</body>
+</html>
