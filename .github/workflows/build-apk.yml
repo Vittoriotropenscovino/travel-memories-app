@@ -25,26 +25,29 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: ./travel-memories-app  # Cambia in ./ se in root, o il nome della tua sottocartella
 
       - name: Capacitor Add Android
-        run: npx cap add android  # Aggiunge piattaforma se non presente
+        run: npx cap add android
+        working-directory: ./travel-memories-app  # Stesso qui
 
       - name: Capacitor Sync
         run: npx cap sync android
+        working-directory: ./travel-memories-app  # Stesso qui
 
       - name: Build Debug APK
-        working-directory: android
+        working-directory: ./travel-memories-app/android  # Aggiusta se sottocartella
         run: ./gradlew assembleDebug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: ./travel-memories-app/android/app/build/outputs/apk/debug/app-debug.apk  # Aggiusta path
 
       - name: Build Release APK
         if: github.event_name == 'workflow_dispatch'
-        working-directory: android
+        working-directory: ./travel-memories-app/android  # Aggiusta
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -63,4 +66,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: ./travel-memories-app/android/app/build/outputs/apk/release/app-release.apk  # Aggiusta path
